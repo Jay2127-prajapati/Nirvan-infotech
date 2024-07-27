@@ -6,6 +6,7 @@ import 'package:nirvan_infotech/colors/colors.dart';
 import 'package:nirvan_infotech/work/course_screen.dart';
 import 'package:nirvan_infotech/work/task_screen.dart';
 import 'package:nirvan_infotech/work/work_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
@@ -53,6 +54,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 const Text(
                   'Are You Sure You \n Want To Logout?',
+                  textAlign: TextAlign.center,
                   style: TextStyle(
                     fontFamily: 'roboto',
                     color: secondaryColorSmokeGrey,
@@ -90,6 +92,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ),
                       onPressed: () {
+                        Navigator.of(context).pop(); // Close dialog
                         _logout(); // Call logout function
                       },
                       child: const Text(
@@ -111,14 +114,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   // Function to handle logout
-  void _logout() {
+  void _logout() async {
+    // Clear any stored user information if using SharedPreferences or similar
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(
+        'isLoggedIn'); // Assuming 'isLoggedIn' is the key used for login status
+
+    // Navigate to login screen and clear the navigation stack
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (context) => const LoginScreen()),
       (route) =>
-          false, // This line ensures user cannot go back to the previous screen
+          false, // This ensures the user cannot go back to the previous screen
     );
-    // Perform any additional logout actions as needed
   }
 
   @override
@@ -466,10 +474,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     // Handle onPressed event
                   },
                   style: ButtonStyle(
-                    backgroundColor: WidgetStateProperty.all<Color>(
+                    backgroundColor: MaterialStateProperty.all<Color>(
                       secondaryColorSmokewhite,
                     ),
-                    shape: WidgetStateProperty.all<RoundedRectangleBorder>(
+                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                       RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10.0),
                         side: const BorderSide(
@@ -526,10 +534,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: ElevatedButton(
                   onPressed: _showLogoutConfirmationDialog,
                   style: ButtonStyle(
-                    backgroundColor: WidgetStateProperty.all<Color>(
+                    backgroundColor: MaterialStateProperty.all<Color>(
                       secondaryColorSmokewhite,
                     ),
-                    shape: WidgetStateProperty.all<RoundedRectangleBorder>(
+                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                       RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10.0),
                         side: const BorderSide(

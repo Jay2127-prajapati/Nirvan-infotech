@@ -2,22 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
-import 'package:nirvan_infotech/Home/attendance_screen.dart';
-import 'package:nirvan_infotech/Home/home_screen.dart';
-import 'package:nirvan_infotech/Home/profile_screen.dart';
+import 'package:nirvan_infotech/Admin/add_user.dart';
+import 'package:nirvan_infotech/Admin/admin_home_screen.dart';
 import 'package:nirvan_infotech/colors/colors.dart';
 
-class CustomBottomNavigationBar extends StatefulWidget {
-  const CustomBottomNavigationBar({
+class AdminBottomNavigationBar extends StatefulWidget {
+  const AdminBottomNavigationBar({
     Key? key,
   }) : super(key: key);
 
   @override
-  _CustomBottomNavigationBarState createState() =>
-      _CustomBottomNavigationBarState();
+  _AdminBottomNavigationBarState createState() =>
+      _AdminBottomNavigationBarState();
 }
 
-class _CustomBottomNavigationBarState extends State<CustomBottomNavigationBar> {
+class _AdminBottomNavigationBarState extends State<AdminBottomNavigationBar> {
   late NavigationController _navigationController;
 
   @override
@@ -100,9 +99,9 @@ class NavigationController extends GetxController {
   final Rx<int> selectedIndex = 0.obs;
 
   final screens = [
-    const HomeScreen(),
-    AttendanceScreen(),
-    const HomeScreen(),
-    const ProfileScreen()
+    const AdminHomeScreen(),
+    const AddUser(),
+    const AdminHomeScreen(),
+    const AdminHomeScreen()
   ];
 }

@@ -44,6 +44,8 @@ dependencies:
   location: ^7.0.0
   geoflutterfire: ^3.0.2
   geolocator: ^12.0.0
+  http: ^1.2.1
+  shared_preferences: ^2.2.3
 
 dev_dependencies:
   flutter_test:

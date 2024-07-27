@@ -1,7 +1,16 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:nirvan_infotech/Components/loder.dart';
-import 'package:nirvan_infotech/Home/home_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:nirvan_infotech/Admin/admin_home_screen.dart';
+import 'package:nirvan_infotech/Components/bottom_nav.dart';
+import 'package:nirvan_infotech/Student/home_screen.dart';
 import 'package:nirvan_infotech/colors/colors.dart';
+
+const String adminRole = 'admin';
+const String studentRole = 'student';
+const String employeeRole = 'employee';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -18,58 +27,50 @@ class _LoginScreenState extends State<LoginScreen> {
   Color _emailBorderColor = secondaryColorSmokeGrey;
   Color _passwordBorderColor = secondaryColorSmokeGrey;
 
-  bool _isLoading = false; // State variable to control the loader
+  bool _isLoading = false;
 
-  void _login() async {
+  @override
+  void initState() {
+    super.initState();
+    _checkLoginStatus();
+  }
+
+  Future<void> _checkLoginStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    bool isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
+    String role = prefs.getString('role') ?? '';
+
+    if (isLoggedIn) {
+      _navigateToRoleScreen(role);
+    }
+  }
+
+  Future<void> _login() async {
     String email = _emailController.text.trim();
     String password = _passwordController.text;
 
+    if (!isValidEmail(email)) {
+      setState(() {
+        _emailBorderColor = warningRed; // Indicate error
+      });
+      _showToastMessage('Invalid email format');
+      return;
+    }
+
     setState(() {
-      _isLoading = true; // Show loader when login process starts
+      _isLoading = true;
       _emailBorderColor = secondaryColorSmokeGrey;
       _passwordBorderColor = secondaryColorSmokeGrey;
     });
 
-    // Simulate async verification (replace with actual async call to your backend)
-    await Future.delayed(
-        const Duration(seconds: 2)); // Simulating a delay of 2 seconds
+    await loginVerification(email, password);
 
     setState(() {
-      _isLoading = false; // Hide loader when verification is complete
+      _isLoading = false;
     });
-
-    if (email.isEmpty) {
-      setState(() {
-        _emailBorderColor = warningRed;
-      });
-      _showToastMessage("Please enter your email");
-    } else if (!isValidEmail(email)) {
-      setState(() {
-        _emailBorderColor = warningRed;
-      });
-      _showToastMessage("Wrong Email");
-    } else if (password.isEmpty) {
-      setState(() {
-        _passwordBorderColor = warningRed;
-      });
-      _showToastMessage("Please enter your password");
-    } else if (password != "your_valid_password") {
-      setState(() {
-        _passwordBorderColor = warningRed;
-      });
-      _showToastMessage("Incorrect Password");
-    } else {
-      // Navigate to home screen on successful login
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
-      );
-    }
   }
 
   bool isValidEmail(String email) {
-    // Implement your email validation logic here
-    // For example, a basic email validation can be done as follows:
     return RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
   }
 
@@ -80,6 +81,87 @@ class _LoginScreenState extends State<LoginScreen> {
         duration: const Duration(seconds: 2),
       ),
     );
+  }
+
+  Future<void> loginVerification(String email, String password) async {
+    final url =
+        Uri.parse('http://192.168.29.237/nirvan-api/employee/emp_login.php');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: json.encode({
+          'email': email,
+          'password': password,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        print('Response data: $responseData'); // Debug print
+
+        if (responseData['success']) {
+          String role = responseData['role'] ?? '';
+
+          // Ensure empId is handled as a string
+          String empId;
+          if (responseData['id'] is int) {
+            empId = responseData['id'].toString();
+          } else {
+            empId = responseData['id'] ?? '';
+          }
+
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setBool('isLoggedIn', true);
+          await prefs.setString('role', role);
+          await prefs.setString('empId', empId); // Store empId
+
+          print('User logged in successfully. empId: $empId');
+
+          _navigateToRoleScreen(role);
+        } else {
+          _showToastMessage(responseData['message']);
+        }
+      } else {
+        _showToastMessage("Server error. Please try again later.");
+      }
+    } catch (error) {
+      print('Error: $error');
+      _showToastMessage("Network error. Please try again later.");
+    }
+  }
+
+  void _navigateToRoleScreen(String role) {
+    switch (role) {
+      case adminRole:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const AdminHomeScreen(),
+          ),
+        );
+        break;
+      case studentRole:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const StuHomeScreen(),
+          ),
+        );
+        break;
+      case employeeRole:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const CustomBottomNavigationBar(),
+          ),
+        );
+        break;
+      default:
+        _showToastMessage("Unknown role. Please contact support.");
+        break;
+    }
   }
 
   @override
@@ -204,11 +286,12 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: ElevatedButton(
                       onPressed: _login,
                       style: ButtonStyle(
-                        backgroundColor: WidgetStateProperty.all<Color>(
+                        backgroundColor: MaterialStateProperty.all<Color>(
                             primaryColorOcenblue),
-                        shape: WidgetStateProperty.all<RoundedRectangleBorder>(
+                        shape:
+                            MaterialStateProperty.all<RoundedRectangleBorder>(
                           RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30.0),
+                            borderRadius: BorderRadius.circular(15.0),
                           ),
                         ),
                       ),
@@ -229,10 +312,9 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
           ),
-          if (_isLoading) // Show loader if _isLoading is true
+          if (_isLoading)
             Container(
-              color: Colors.black
-                  .withOpacity(0.5), // Semi-transparent black background
+              color: Colors.black.withOpacity(0.5),
               child: const Center(
                 child: WaveLoader(
                   color: primaryColorOcenblue,

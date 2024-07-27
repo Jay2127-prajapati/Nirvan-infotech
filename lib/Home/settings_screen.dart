@@ -29,7 +29,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _contactNoController.text = _contactNo;
   }
 
-  // Function to open gallery and select image
   Future<void> _pickImage(ImageSource source) async {
     final pickedFile = await ImagePicker().pickImage(source: source);
     if (pickedFile != null) {
@@ -37,10 +36,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         _imageFile = File(pickedFile.path);
       });
     }
-  }
-
-  void _login() {
-    _showConfirmationDialog();
   }
 
   void _showConfirmationDialog() {
@@ -260,11 +255,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 width: MediaQuery.of(context).size.width * 0.8,
                 margin: const EdgeInsets.symmetric(vertical: 8.0),
                 child: ElevatedButton(
-                  onPressed: _login,
+                  onPressed: _showConfirmationDialog,
                   style: ButtonStyle(
                     backgroundColor:
-                        WidgetStateProperty.all<Color>(primaryColorOcenblue),
-                    shape: WidgetStateProperty.all<RoundedRectangleBorder>(
+                        MaterialStateProperty.all<Color>(primaryColorOcenblue),
+                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                       RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(15.0),
                       ),
@@ -277,7 +272,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       style: TextStyle(
                         fontSize: 18.0,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: primaryColorWhite,
                       ),
                     ),
                   ),

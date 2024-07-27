@@ -1,8 +1,14 @@
+// ignore_for_file: unused_local_variable
+
 import 'package:flutter/material.dart';
+import 'package:nirvan_infotech/colors/colors.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
+import 'dart:convert';
 import 'package:nirvan_infotech/Home/notification_screen.dart';
-import 'package:nirvan_infotech/colors/colors.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AttendanceScreen extends StatefulWidget {
   const AttendanceScreen({Key? key}) : super(key: key);
@@ -13,11 +19,9 @@ class AttendanceScreen extends StatefulWidget {
 
 class _AttendanceScreenState extends State<AttendanceScreen> {
   CalendarFormat _calendarFormat = CalendarFormat.month;
-  DateTime _focusedDay = DateTime.now(); // Initialize with current date
-  DateTime _firstDay =
-      DateTime.utc(2024, 1, 1); // Example: Start of the year 2024
-  DateTime _lastDay =
-      DateTime.utc(2024, 12, 31); // Example: End of the year 2024
+  DateTime _focusedDay = DateTime.now();
+  DateTime _firstDay = DateTime.utc(2024, 1, 1);
+  DateTime _lastDay = DateTime.utc(2024, 12, 31);
   DateTime? _selectedDay;
   Map<DateTime, Map<String, String>> attendanceStatus = {};
   List<DateTime> attendanceDates = [];
@@ -32,27 +36,24 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   Future<void> _checkLocationPermission() async {
     try {
       LocationPermission permission;
-
-      // Check if location services are enabled
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-        // Location services are not enabled, show a dialog to enable it
         bool enableResult = await showDialog(
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
-              title: Text('Location Services Disabled'),
-              content:
-                  Text('Please enable location services to use this feature.'),
+              title: const Text('Location Services Disabled'),
+              content: const Text(
+                  'Please enable location services to use this feature.'),
               actions: <Widget>[
                 TextButton(
-                  child: Text('Cancel'),
+                  child: const Text('Cancel'),
                   onPressed: () {
                     Navigator.of(context).pop(false);
                   },
                 ),
                 TextButton(
-                  child: Text('Enable'),
+                  child: const Text('Enable'),
                   onPressed: () {
                     Navigator.of(context).pop(true);
                   },
@@ -62,22 +63,20 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
           },
         );
 
-        // If user chose to enable location services
         if (enableResult == true) {
-          // Request permission
           permission = await Geolocator.requestPermission();
         } else {
-          // Handle if user canceled enabling location services
           return;
         }
       } else {
-        // Location services are enabled, request permission directly
-        permission = await Geolocator.requestPermission();
+        permission = await Geolocator.checkPermission();
+        if (permission == LocationPermission.denied) {
+          permission = await Geolocator.requestPermission();
+        }
       }
 
-      // Handle the permission result
       if (permission == LocationPermission.denied) {
-        print('Location permissions are denied (permanent).');
+        print('Location permissions are denied.');
       } else if (permission == LocationPermission.deniedForever) {
         print('Location permissions are permanently denied.');
       } else {
@@ -88,6 +87,53 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     }
   }
 
+  Future<void> sendAttendanceData({
+    required String empId,
+    required DateTime date,
+    required String inTime,
+    String? outTime, // Allow null for outTime
+    required int holidayCurrentMonth,
+    required int totalHoliday,
+  }) async {
+    final url = Uri.parse(
+        'http://192.168.29.237/nirvan-api/employee/emp_attendance.php');
+
+    // Debugging: Check which fields are present
+    List<String> missingFields = [];
+    if (empId.isEmpty) missingFields.add('empId');
+    if (inTime.isEmpty) missingFields.add('inTime');
+    if (holidayCurrentMonth < 0) missingFields.add('holidayCurrentMonth');
+    if (totalHoliday < 0) missingFields.add('totalHoliday');
+
+    if (missingFields.isNotEmpty) {
+      print('Missing fields: ${missingFields.join(', ')}');
+      return;
+    }
+
+    final response = await http.post(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(<String, dynamic>{
+        'empid': empId,
+        'date': DateFormat('yyyy-MM-dd').format(date),
+        'intime': inTime,
+        'outtime': outTime ?? '', // Send empty string if outTime is null
+        'holidaycurrentmonth': holidayCurrentMonth,
+        'totalholiday': totalHoliday,
+      }),
+    );
+
+    if (response.statusCode == 201) {
+      print('Attendance added successfully.');
+    } else {
+      // Print response body for debugging
+      print('Failed to add attendance: ${response.body}');
+      throw Exception('Failed to add attendance: ${response.body}');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -95,12 +141,12 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         title: const Text(
           'Attendance',
           style: TextStyle(
-            color: Colors.white,
+            color: primaryColorWhite,
             fontWeight: FontWeight.w600,
           ),
         ),
         centerTitle: true,
-        backgroundColor: Colors.blue,
+        backgroundColor: primaryColorOcenblue,
         actions: [
           IconButton(
             onPressed: () {
@@ -112,7 +158,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
               );
             },
             icon: const Icon(Icons.notifications),
-            color: Colors.white,
+            color: primaryColorWhite,
           ),
         ],
       ),
@@ -142,28 +188,28 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                     },
                     calendarStyle: CalendarStyle(
                       todayDecoration: BoxDecoration(
-                        color: Colors.blue.withOpacity(0.5),
+                        color: primaryColorNaiveblue.withOpacity(0.5),
                         shape: BoxShape.circle,
                       ),
-                      selectedDecoration: BoxDecoration(
-                        color: Colors.blue,
+                      selectedDecoration: const BoxDecoration(
+                        color: primaryColorNaiveblue,
                         shape: BoxShape.circle,
                       ),
-                      weekendTextStyle: TextStyle(color: Colors.red),
+                      weekendTextStyle: const TextStyle(color: warningRed),
                     ),
-                    headerStyle: HeaderStyle(
+                    headerStyle: const HeaderStyle(
                       titleCentered: true,
                       formatButtonVisible: false,
                     ),
                   ),
-                  Divider(thickness: 1),
+                  const Divider(thickness: 1),
                   Padding(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 16.0, vertical: 8.0),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
+                        const Text(
                           'Attendance Details',
                           style: TextStyle(
                             fontSize: 18,
@@ -176,15 +222,15 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                               onPressed: () {
                                 // Implement search functionality
                               },
-                              icon: Icon(Icons.search),
-                              color: Colors.blue,
+                              icon: const Icon(Icons.search),
+                              color: primaryColorNaiveblue,
                             ),
                             IconButton(
                               onPressed: () {
                                 // Implement filter functionality
                               },
-                              icon: Icon(Icons.filter_list),
-                              color: Colors.blue,
+                              icon: const Icon(Icons.filter_list),
+                              color: primaryColorNaiveblue,
                             ),
                           ],
                         ),
@@ -193,7 +239,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                   ),
                   ListView.builder(
                     shrinkWrap: true,
-                    physics: NeverScrollableScrollPhysics(),
+                    physics: const NeverScrollableScrollPhysics(),
                     itemCount: attendanceData.length,
                     itemBuilder: (context, index) {
                       final data = attendanceData[index];
@@ -215,7 +261,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                               backgroundColor: Colors.blue,
                               child: Text(
                                 '${data['date'].day}',
-                                style: TextStyle(color: Colors.white),
+                                style: const TextStyle(color: Colors.white),
                               ),
                             ),
                             title: Text('Entry: $entryTime - Exit: $exitTime'),
@@ -253,7 +299,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
     if (!isWithinLocation) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('You are not within the attendance area.')),
+        const SnackBar(
+            content: Text('You are not within the attendance area.')),
       );
       return;
     }
@@ -264,6 +311,18 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     if (hasExistingData) {
       entryTime = attendanceStatus[selectedDay]!['inTime'] ?? '-';
       exitTime = attendanceStatus[selectedDay]!['outTime'] ?? '-';
+    }
+
+    // Retrieve empId from shared preferences
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? empId = prefs.getString('empId');
+
+    if (empId == null) {
+      // Handle the case where empId is not found
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Employee ID not found.')),
+      );
+      return;
     }
 
     bool? isAttended = await showDialog(
@@ -277,15 +336,36 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               ListTile(
-                title: Text("I'm in"),
-                onTap: () {
+                title: const Text("I'm in"),
+                onTap: () async {
                   Navigator.of(context).pop(true);
+                  final inTime = _formatTime(DateTime.now());
+                  final outTime = null; // Set to null or empty string
+                  await sendAttendanceData(
+                    empId: empId,
+                    date: selectedDay,
+                    inTime: inTime,
+                    outTime: outTime,
+                    holidayCurrentMonth: 0, // Example data
+                    totalHoliday: 0, // Example data
+                  );
                 },
               ),
               ListTile(
-                title: Text("I'm out"),
-                onTap: () {
+                title: const Text("I'm out"),
+                onTap: () async {
                   Navigator.of(context).pop(false);
+                  final inTime =
+                      attendanceStatus[selectedDay]!['inTime'] ?? '-';
+                  final outTime = _formatTime(DateTime.now());
+                  await sendAttendanceData(
+                    empId: empId,
+                    date: selectedDay,
+                    inTime: inTime,
+                    outTime: outTime,
+                    holidayCurrentMonth: 0, // Example data
+                    totalHoliday: 0, // Example data
+                  );
                 },
               ),
             ],
@@ -333,7 +413,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   }
 
   String _formatTime(DateTime dateTime) {
-    return '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')} ${dateTime.hour < 12 ? 'AM' : 'PM'}';
+    return '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}:${dateTime.second.toString().padLeft(2, '0')}'; // Format as HH:mm:ss
   }
 
   Future<bool> _checkLocation() async {
@@ -342,8 +422,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         desiredAccuracy: LocationAccuracy.best,
       );
 
-      double attendanceLatitude = 22.561703;
-      double attendanceLongitude = 72.922973;
+      double attendanceLatitude = 22.545382192060995;
+      double attendanceLongitude = 72.93296855169679;
 
       double distanceInMeters = await Geolocator.distanceBetween(
         position.latitude,
