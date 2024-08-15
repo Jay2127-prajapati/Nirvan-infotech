@@ -1,8 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:nirvan_infotech/Admin/ComponentsAdmin/bottom_bar.dart';
 import 'package:nirvan_infotech/Components/bottom_nav.dart';
-import 'package:nirvan_infotech/Student/home_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:nirvan_infotech/Authentications/login_screen.dart';
 import 'package:nirvan_infotech/colors/colors.dart';
@@ -38,16 +36,9 @@ class _SplashScreenState extends State<SplashScreen> {
           MaterialPageRoute(
             builder: (context) {
               if (isLoggedIn) {
-                switch (role) {
-                  case adminRole:
-                    return const AdminBottomNavigationBar();
-                  case studentRole:
-                    return const StuHomeScreen();
-                  case employeeRole:
-                    return const CustomBottomNavigationBar();
-                  default:
-                    return const LoginScreen();
-                }
+                // Navigate directly to CustomBottomNavigationBar if user is logged in
+                return CustomBottomNavigationBar(
+                    role: role); // Pass the role here
               } else {
                 return const LoginScreen();
               }

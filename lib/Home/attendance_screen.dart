@@ -10,6 +10,8 @@ import 'dart:convert';
 import 'package:nirvan_infotech/Home/notification_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../const fiels/const.dart';
+
 class AttendanceScreen extends StatefulWidget {
   const AttendanceScreen({Key? key}) : super(key: key);
 
@@ -96,7 +98,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     required int totalHoliday,
   }) async {
     final url = Uri.parse(
-        'http://192.168.29.237/nirvan-api/employee/emp_attendance.php');
+        'http://$baseIpAddress/nirvan-api/employee/emp_attendance.php');
 
     // Debugging: Check which fields are present
     List<String> missingFields = [];
@@ -422,8 +424,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         desiredAccuracy: LocationAccuracy.best,
       );
 
-      double attendanceLatitude = 22.545382192060995;
-      double attendanceLongitude = 72.93296855169679;
+      double attendanceLatitude = 22.561703;
+      double attendanceLongitude = 72.922973;
 
       double distanceInMeters = await Geolocator.distanceBetween(
         position.latitude,

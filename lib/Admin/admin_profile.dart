@@ -6,19 +6,19 @@ import 'package:nirvan_infotech/Authentications/login_screen.dart';
 import 'package:nirvan_infotech/Home/notification_screen.dart';
 import 'package:nirvan_infotech/colors/colors.dart';
 import 'package:nirvan_infotech/work/course_screen.dart';
-import 'package:nirvan_infotech/work/task_screen.dart';
+import 'package:nirvan_infotech/work/work_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../const fiels/const.dart';
 
-class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({Key? key}) : super(key: key);
+class AdminProfile extends StatefulWidget {
+  const AdminProfile({Key? key}) : super(key: key);
 
   @override
-  State<ProfileScreen> createState() => _ProfileScreenState();
+  State<AdminProfile> createState() => _AdminProfileState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
+class _AdminProfileState extends State<AdminProfile> {
   bool isDarkMode = false; // Track the state of dark mode
   Map<String, dynamic> profileData = {}; // Store profile data
   Uint8List? imageBytes; // Store image bytes
@@ -261,44 +261,42 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      const Text(
-                        'Domain',
-                        style: TextStyle(
-                          fontSize: 15.5,
-                          color: secondaryColorSmokeGrey,
-                          fontFamily: 'roboto',
-                          fontWeight: FontWeight.bold,
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ModulesScreen(),
                         ),
-                      ),
-                      Text(
-                        profileData.isNotEmpty
-                            ? (profileData['domain'] != null
-                                ? profileData['domain'].toString()
-                                : 'No domain data') // Fallback text
-                            : 'No domain data', // Fallback text
-                        style: const TextStyle(
-                          fontSize: 14.0,
-                          color: secondaryColorSmokeGrey,
-                          fontFamily: 'roboto',
+                      );
+                    },
+                    child: Column(
+                      children: [
+                        const Text(
+                          'Domain',
+                          style: TextStyle(
+                            fontSize: 15.5,
+                            color: secondaryColorSmokeGrey,
+                            fontFamily: 'roboto',
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
-                      const SizedBox(
-                        height: 30.0,
-                      ),
-                      // GestureDetector wrapped only around CircleAvatar
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const ModulesScreen(),
-                            ),
-                          );
-                        },
-                        child: CircleAvatar(
+                        Text(
+                          profileData.isNotEmpty
+                              ? (profileData['domain'] != null
+                                  ? profileData['domain'].toString()
+                                  : 'No domain data') // Fallback text
+                              : 'No domain data', // Fallback text
+                          style: const TextStyle(
+                            fontSize: 14.0,
+                            color: secondaryColorSmokeGrey,
+                            fontFamily: 'roboto',
+                          ),
+                        ),
+                        const SizedBox(
+                          height: 30.0,
+                        ),
+                        CircleAvatar(
                           radius: 35,
                           backgroundColor: secondaryColorSmokeGrey,
                           child: ClipOval(
@@ -319,58 +317,56 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                           ),
                         ),
-                      ),
-                      const SizedBox(
-                        height: 13.5,
-                      ),
-                      const Text(
-                        'Watch Attendance',
-                        style: TextStyle(
-                          fontFamily: 'roboto',
-                          color: secondaryColorSmokeGrey,
-                          fontWeight: FontWeight.w600,
+                        const SizedBox(
+                          height: 13.5,
                         ),
-                      )
-                    ],
+                        const Text(
+                          'Modules',
+                          style: TextStyle(
+                            fontFamily: 'roboto',
+                            color: secondaryColorSmokeGrey,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        )
+                      ],
+                    ),
                   ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      const Text(
-                        'Experience',
-                        style: TextStyle(
-                          fontSize: 15.5,
-                          color: secondaryColorSmokeGrey,
-                          fontFamily: 'roboto',
-                          fontWeight: FontWeight.bold,
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const WorkScreen(),
                         ),
-                      ),
-                      Text(
-                        profileData.isNotEmpty
-                            ? (profileData['experience'] != null
-                                ? profileData['experience'].toString()
-                                : 'No experience data') // Fallback text
-                            : 'No experience data', // Fallback text
-                        style: const TextStyle(
-                          fontSize: 14.0,
-                          color: secondaryColorSmokeGrey,
-                          fontFamily: 'roboto',
+                      );
+                    },
+                    child: Column(
+                      children: [
+                        const Text(
+                          'Experience',
+                          style: TextStyle(
+                            fontSize: 15.5,
+                            color: secondaryColorSmokeGrey,
+                            fontFamily: 'roboto',
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
-                      const SizedBox(
-                        height: 30.0,
-                      ),
-                      // GestureDetector wrapped only around CircleAvatar
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const TaskScreen(),
-                            ),
-                          );
-                        },
-                        child: CircleAvatar(
+                        Text(
+                          profileData.isNotEmpty
+                              ? (profileData['experience'] != null
+                                  ? profileData['experience'].toString()
+                                  : 'No experience data') // Fallback text
+                              : 'No experience data', // Fallback text
+                          style: const TextStyle(
+                            fontSize: 14.0,
+                            color: secondaryColorSmokeGrey,
+                            fontFamily: 'roboto',
+                          ),
+                        ),
+                        const SizedBox(
+                          height: 30.0,
+                        ),
+                        CircleAvatar(
                           radius: 35,
                           backgroundColor: secondaryColorSmokeGrey,
                           child: ClipOval(
@@ -383,7 +379,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 ),
                               ),
                               child: Image.asset(
-                                'assets/img/planning.png',
+                                'assets/img/working.png',
                                 width: 70,
                                 height: 90,
                                 fit: BoxFit.cover,
@@ -391,20 +387,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                           ),
                         ),
-                      ),
-                      const SizedBox(
-                        height: 20.0,
-                      ),
-                      const Text(
-                        'Task',
-                        style: TextStyle(
-                          fontFamily: 'roboto',
-                          color: secondaryColorSmokeGrey,
-                          fontWeight: FontWeight.w600,
+                        const SizedBox(
+                          height: 20.0,
                         ),
-                      ),
-                    ],
-                  )
+                        const Text(
+                          'Your Work',
+                          style: TextStyle(
+                            fontFamily: 'roboto',
+                            color: secondaryColorSmokeGrey,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        )
+                      ],
+                    ),
+                  ),
                 ],
               ),
 

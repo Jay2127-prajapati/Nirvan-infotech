@@ -1,81 +1,19 @@
+// admin_home_screen.dart
+
 import 'package:flutter/material.dart';
+import 'package:nirvan_infotech/Admin/all_employee_list.dart';
+import 'package:nirvan_infotech/Admin/task.dart';
+import 'package:nirvan_infotech/Admin/watch_attendance.dart';
 import 'package:nirvan_infotech/colors/colors.dart';
 
-// Fake data for demonstration
-List<Map<String, dynamic>> fakeUserData = [
-  {
-    'id': 1,
-    'name': 'John Doe',
-    'dpUrl': 'https://via.placeholder.com/150',
-    'todayEntry': true,
-    'entryTime': '10:00 AM',
-    'exitTime': '05:00 PM',
-    'completedTasks': 5,
-    'pendingTasks': 2,
-  },
-  {
-    'id': 2,
-    'name': 'Jane Smith',
-    'dpUrl': 'https://via.placeholder.com/150',
-    'todayEntry': false,
-  },
-  {
-    'id': 3,
-    'name': 'Michael Johnson',
-    'dpUrl': 'https://via.placeholder.com/150',
-    'todayEntry': true,
-    'entryTime': '09:30 AM',
-  },
-];
-
-class AdminHomeScreen extends StatefulWidget {
+class AdminHomeScreen extends StatelessWidget {
   const AdminHomeScreen({Key? key}) : super(key: key);
-
-  @override
-  State<AdminHomeScreen> createState() => _AdminHomeScreenState();
-}
-
-class _AdminHomeScreenState extends State<AdminHomeScreen> {
-  String _selectedFilter = 'Today'; // Default filter
-  List<Map<String, dynamic>> _filteredUsers = [];
-
-  @override
-  void initState() {
-    super.initState();
-    _filterUsers(_selectedFilter);
-  }
-
-  void _filterUsers(String filter) {
-    setState(() {
-      switch (filter) {
-        case 'Today':
-          _filteredUsers =
-              fakeUserData.where((user) => user['todayEntry'] == true).toList();
-          break;
-        case 'Yesterday':
-          // Logic to filter data for Yesterday
-          // Not implemented in this demo
-          break;
-        case 'Last 1 week':
-          // Logic to filter data for Last 1 week
-          // Not implemented in this demo
-          break;
-        case 'Last 1 month':
-          // Logic to filter data for Last 1 month
-          // Not implemented in this demo
-          break;
-        default:
-          _filteredUsers = [];
-          break;
-      }
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
+        title: const Text(
           "Admin Dashboard",
           style: TextStyle(
             color: primaryColorWhite,
@@ -86,200 +24,114 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
         centerTitle: true,
         backgroundColor: primaryColorOcenblue,
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: DropdownButtonFormField<String>(
-              value: _selectedFilter,
-              onChanged: (value) {
-                setState(() {
-                  _selectedFilter = value!;
-                  _filterUsers(_selectedFilter);
-                });
-              },
-              items: ['Today', 'Yesterday', 'Last 1 week', 'Last 1 month']
-                  .map((String filter) => DropdownMenuItem<String>(
-                        value: filter,
-                        child: Text(filter),
-                      ))
-                  .toList(),
-              decoration: InputDecoration(
-                labelText: 'Filter',
-                border: OutlineInputBorder(),
-                isDense: true,
-              ),
-            ),
-          ),
-          Expanded(
-            child: ListView.builder(
-              itemCount: _filteredUsers.length,
-              itemBuilder: (context, index) {
-                final user = _filteredUsers[index];
-                return GestureDetector(
-                  onTap: () => _showUserDetails(context, user),
-                  child: Card(
-                    elevation: 2,
-                    margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          GestureDetector(
-                            onTap: () => _showUserPopup(context, user),
-                            child: CircleAvatar(
-                              radius: 30,
-                              backgroundImage: NetworkImage(user['dpUrl']),
-                            ),
-                          ),
-                          SizedBox(width: 16),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                user['name'],
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              SizedBox(height: 8),
-                              if (user['todayEntry'] != null)
-                                Text(
-                                  user['todayEntry']
-                                      ? 'Entered at ${user['entryTime']}'
-                                      : 'Did not enter today',
-                                  style: TextStyle(
-                                    color: user['todayEntry']
-                                        ? Colors.green
-                                        : Colors.black,
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ],
-                      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: GridView.count(
+            crossAxisCount: 2,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            children: [
+              _buildBoxButton(
+                context,
+                icon: Icons.event, // Or Icons.calendar_today
+                label: 'Employee Attendance',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const WatchAttendance(),
                     ),
-                  ),
-                );
-              },
-            ),
+                  );
+                },
+              ),
+              _buildBoxButton(
+                context,
+                icon: Icons.emoji_people_outlined,
+                label: 'All Employes',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AllEmployeeList(),
+                    ),
+                  );
+                },
+              ),
+              _buildBoxButton(
+                context,
+                icon: Icons.analytics,
+                label: 'Task',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const Task(),
+                    ),
+                  );
+                },
+              ),
+              _buildBoxButton(
+                context,
+                icon: Icons.settings,
+                label: 'Action 3',
+                onTap: () {
+                  // Implement action 3
+                },
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 
-  void _showUserDetails(BuildContext context, Map<String, dynamic> user) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return Dialog(
-          elevation: 5,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Container(
-            padding: EdgeInsets.all(16),
+  Widget _buildBoxButton(BuildContext context,
+      {required IconData icon,
+      required String label,
+      required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8.0),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.5), // Custom shadow color
+              spreadRadius: 3,
+              blurRadius: 5,
+              offset: const Offset(0, 3), // Shadow direction
+            ),
+          ],
+        ),
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
             child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                Icon(
+                  icon,
+                  size: 40,
+                  color: Colors.blue, // Icon color
+                ),
+                const SizedBox(height: 8),
                 Text(
-                  user['name'],
-                  style: TextStyle(
-                    fontSize: 20,
+                  label,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 16.0,
                     fontWeight: FontWeight.bold,
                   ),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  user['todayEntry']
-                      ? 'Entry Time: ${user['entryTime']}'
-                      : 'Did not enter today',
-                  style: TextStyle(
-                    color: user['todayEntry'] ? Colors.green : Colors.red,
-                  ),
-                ),
-                SizedBox(height: 8),
-                if (user['todayEntry'])
-                  Text(
-                    'Exit Time: ${user['exitTime']}',
-                    style: TextStyle(color: Colors.blue),
-                  ),
-                SizedBox(height: 8),
-                Text(
-                  'Completed Tasks: ${user['completedTasks']}',
-                ),
-                SizedBox(height: 8),
-                Text(
-                  'Pending Tasks: ${user['pendingTasks']}',
                 ),
               ],
             ),
           ),
-        );
-      },
-    );
-  }
-
-  void _showUserPopup(BuildContext context, Map<String, dynamic> user) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return Dialog(
-          elevation: 5,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Container(
-            padding: EdgeInsets.all(16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                CircleAvatar(
-                  radius: 50,
-                  backgroundImage: NetworkImage(user['dpUrl']),
-                ),
-                SizedBox(height: 16),
-                Text(
-                  user['name'],
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  user['todayEntry']
-                      ? 'Entry Time: ${user['entryTime']}'
-                      : 'Did not enter today',
-                  style: TextStyle(
-                    color: user['todayEntry'] ? Colors.green : Colors.red,
-                  ),
-                ),
-                SizedBox(height: 8),
-                if (user['todayEntry'])
-                  Text(
-                    'Exit Time: ${user['exitTime']}',
-                    style: TextStyle(color: Colors.blue),
-                  ),
-                SizedBox(height: 8),
-                Text(
-                  'Completed Tasks: ${user['completedTasks']}',
-                ),
-                SizedBox(height: 8),
-                Text(
-                  'Pending Tasks: ${user['pendingTasks']}',
-                ),
-              ],
-            ),
-          ),
-        );
-      },
+        ),
+      ),
     );
   }
 }

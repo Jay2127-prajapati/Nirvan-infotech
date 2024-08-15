@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:nirvan_infotech/Components/loder.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:nirvan_infotech/Admin/admin_home_screen.dart';
 import 'package:nirvan_infotech/Components/bottom_nav.dart';
-import 'package:nirvan_infotech/Student/home_screen.dart';
 import 'package:nirvan_infotech/colors/colors.dart';
+
+import '../const fiels/const.dart';
 
 const String adminRole = 'admin';
 const String studentRole = 'student';
@@ -85,7 +85,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> loginVerification(String email, String password) async {
     final url =
-        Uri.parse('http://192.168.29.237/nirvan-api/employee/emp_login.php');
+        Uri.parse('http://$baseIpAddress/nirvan-api/employee/emp_login.php');
 
     try {
       final response = await http.post(
@@ -133,35 +133,12 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _navigateToRoleScreen(String role) {
-    switch (role) {
-      case adminRole:
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const AdminHomeScreen(),
-          ),
-        );
-        break;
-      case studentRole:
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const StuHomeScreen(),
-          ),
-        );
-        break;
-      case employeeRole:
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const CustomBottomNavigationBar(),
-          ),
-        );
-        break;
-      default:
-        _showToastMessage("Unknown role. Please contact support.");
-        break;
-    }
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CustomBottomNavigationBar(role: role),
+      ),
+    );
   }
 
   @override

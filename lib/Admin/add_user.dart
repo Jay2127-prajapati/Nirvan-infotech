@@ -4,6 +4,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
+import 'package:nirvan_infotech/colors/colors.dart';
+
+import '../const fiels/const.dart';
 
 class AddUser extends StatefulWidget {
   const AddUser({Key? key}) : super(key: key);
@@ -68,7 +71,7 @@ class _AddUserState extends State<AddUser> {
 
   Future<void> _saveUser() async {
     // URL of your API
-    String apiUrl = 'http://192.168.29.237/nirvan-api/admin/admin_add_user.php';
+    String apiUrl = 'http://$baseIpAddress/nirvan-api/admin/admin_add_user.php';
 
     // Validate required fields
     if (_nameController.text.isEmpty) {
@@ -225,7 +228,7 @@ class _AddUserState extends State<AddUser> {
           ),
         ),
         centerTitle: true,
-        backgroundColor: Colors.blue,
+        backgroundColor: primaryColorOcenblue,
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(screenWidth * 0.04), // Adjust padding
