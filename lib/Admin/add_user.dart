@@ -70,7 +70,6 @@ class _AddUserState extends State<AddUser> {
   }
 
   Future<void> _saveUser() async {
-    // URL of your API
     String apiUrl = 'http://$baseIpAddress/nirvan-api/admin/admin_add_user.php';
 
     // Validate required fields
@@ -102,14 +101,12 @@ class _AddUserState extends State<AddUser> {
       }
     }
 
-    // Read image as base64 string
     String? base64Image;
     if (_image != null) {
       List<int> imageBytes = await _image!.readAsBytes();
       base64Image = base64Encode(imageBytes);
     }
 
-    // Prepare request body
     var body = {
       'role': _selectedRole,
       'id': _idController.text,
@@ -125,25 +122,25 @@ class _AddUserState extends State<AddUser> {
       body.addAll({
         'domain': _domainController.text,
         'experience': _experienceController.text,
+        'empid': _idController
+            .text, // Ensure this matches your form field for employee ID
       });
     }
 
-    // Send the request
     try {
       var response = await http.post(
         Uri.parse(apiUrl),
         body: jsonEncode(body),
         headers: {'Content-Type': 'application/json'},
       );
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+
       if (response.statusCode == 201) {
         _showSuccess('User added successfully');
       } else {
         var responseBody = jsonDecode(response.body);
-        if (responseBody.containsKey('error')) {
-          _showWarning(responseBody['error']);
-        } else {
-          _showWarning('Failed to add user: ${response.statusCode}');
-        }
+        _showWarning(responseBody['error'] ?? 'Failed to add user');
       }
     } catch (e) {
       _showWarning('Error adding user: $e');

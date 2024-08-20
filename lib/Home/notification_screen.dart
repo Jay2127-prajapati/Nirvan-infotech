@@ -30,6 +30,29 @@ class _NotificationScreenState extends State<NotificationScreen> {
           color: secondaryColorSmokewhite,
         ),
       ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Loader
+            const CircularProgressIndicator(
+              color: primaryColorNaiveblue, // Adjust color as needed
+            ),
+            const SizedBox(height: 20.0), // Space between loader and text
+            // Work in progress message
+            Text(
+              "Work in progress. Not built yet.",
+              style: TextStyle(
+                fontSize: 18.0,
+                fontWeight: FontWeight.bold,
+                color: secondaryColorSmokeGrey,
+                fontFamily: 'roboto',
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

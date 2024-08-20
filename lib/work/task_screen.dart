@@ -28,10 +28,19 @@ class _TaskScreenState extends State<TaskScreen> {
   Future<void> _getEmpId() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
-      _empId =
-          prefs.getString('empId'); // Retrieve empId from SharedPreferences
+      _empId = prefs
+          .getString('employeeId'); // Retrieve empId from SharedPreferences
     });
-    _fetchTasks(); // Fetch tasks after empId is retrieved
+    if (_empId != null && _empId!.isNotEmpty) {
+      _fetchTasks(); // Fetch tasks after empId is retrieved
+    } else {
+      // Handle the case where empId is null
+      print('Employee ID is null. Cannot fetch tasks.');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('Unable to fetch tasks. Employee ID is missing.')),
+      );
+    }
   }
 
   Future<void> _fetchTasks() async {
@@ -109,11 +118,9 @@ class _TaskScreenState extends State<TaskScreen> {
     setState(() {
       _selectedStatus = status;
 
-      print('Filtering tasks with status: $status'); // Debugging statement
-
       if (status == 'All') {
         _filteredTasks = List.from(_tasks);
-      } else if (status == 'New') {
+      } else if (status == 'new') {
         final today = DateTime.now()
             .toLocal()
             .toString()
@@ -128,6 +135,8 @@ class _TaskScreenState extends State<TaskScreen> {
           dbStatus = 'complete';
         } else if (status == 'Pending') {
           dbStatus = 'pending';
+        } else if (status == 'In Progress') {
+          dbStatus = 'in progress';
         } else {
           dbStatus =
               status.toLowerCase(); // Default to lowercase if matches enum
@@ -135,13 +144,9 @@ class _TaskScreenState extends State<TaskScreen> {
 
         _filteredTasks = _tasks.where((task) {
           final taskStatus = task['status']?.toLowerCase() ?? '';
-          print('Task status: $taskStatus'); // Debugging statement
-          print('Comparing with: $dbStatus'); // Debugging statement
           return taskStatus == dbStatus;
         }).toList();
       }
-
-      print('Filtered tasks: $_filteredTasks'); // Debugging statement
     });
   }
 
@@ -262,7 +267,7 @@ class _TaskScreenState extends State<TaskScreen> {
   }
 
   Color _getStatusColor(String status) {
-    switch (status) {
+    switch (status.toLowerCase()) {
       case 'complete':
         return Colors.green;
       case 'pending':
@@ -425,6 +430,7 @@ class _TaskScreenState extends State<TaskScreen> {
                 final taskStatus = task['status']?.toLowerCase() ?? '';
                 final isDeadlineNear = _isDeadlineNear(task['deadline']);
 
+                // Define color based on task status
                 Color statusColor;
                 if (taskStatus == 'complete') {
                   statusColor = Colors.green;
@@ -432,6 +438,8 @@ class _TaskScreenState extends State<TaskScreen> {
                   statusColor = Colors.orange;
                 } else if (taskStatus == 'in progress') {
                   statusColor = Colors.yellow;
+                } else if (taskStatus == 'new') {
+                  statusColor = Colors.blue; // Add this line for "new" status
                 } else {
                   statusColor =
                       Colors.black; // Default color if status is unknown
@@ -493,7 +501,8 @@ class _TaskScreenState extends State<TaskScreen> {
                                 style: TextStyle(
                                   fontSize: 14.0,
                                   fontWeight: FontWeight.bold,
-                                  color: statusColor,
+                                  color:
+                                      statusColor, // Use the updated statusColor
                                 ),
                               ),
                             ],
@@ -505,7 +514,7 @@ class _TaskScreenState extends State<TaskScreen> {
                 );
               },
             ),
-          ),
+          )
         ],
       ),
     );

@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart'; // Add for Toasts
 import 'package:http/http.dart' as http;
 import 'package:nirvan_infotech/colors/colors.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // For SharedPreferences
 
 import '../const fiels/const.dart';
 
@@ -26,6 +28,15 @@ class _MonthDetailScreenState extends State<MonthDetailScreen> {
   bool _isLoading = false;
   String _errorMessage = '';
 
+  // Define Indian public holidays
+  final Map<String, String> _governmentHolidays = {
+    '2023-08-15': 'Independence Day',
+    '2023-01-26': 'Republic Day',
+    '2023-12-25': 'Christmas',
+    '2023-11-12': 'Diwali',
+    '2023-03-08': 'Holi',
+  };
+
   @override
   void initState() {
     super.initState();
@@ -38,15 +49,50 @@ class _MonthDetailScreenState extends State<MonthDetailScreen> {
     });
 
     try {
-      final response = await http.get(Uri.parse(
-          'http://$baseIpAddress/nirvan-api/admin/fetch_attendance.php'));
+      final prefs = await SharedPreferences.getInstance();
+      final empId = prefs
+          .getString('employeeId'); // Retrieve empId from SharedPreferences
+
+      // Debug: Print the retrieved empId
+      print('Retrieved empId: $empId');
+
+      if (empId == null) {
+        setState(() {
+          _errorMessage = 'User not logged in';
+          _isLoading = false;
+        });
+        return;
+      }
+
+      // Create the JSON payload
+      final payload = json.encode({
+        'empId': empId,
+        'month': widget.monthIndex + 1,
+        'year': widget.selectedYear,
+      });
+
+      // Print the payload for debugging
+      print('Request payload: $payload');
+
+      final response = await http.post(
+        Uri.parse(
+            'http://$baseIpAddress/nirvan-api/employee/employee_attendance_fetch.php'),
+        headers: {"Content-Type": "application/json"},
+        body: payload,
+      );
+
+      // Print response status and body for debugging
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = json.decode(response.body);
 
+        // Print decoded data for debugging
+        print('Decoded response data: $data');
+
         if (data['success']) {
           setState(() {
-            // Filter the data for the selected month and year
             _attendanceData =
                 List<Map<String, dynamic>>.from(data['attendance'])
                     .where((entry) {
@@ -61,19 +107,62 @@ class _MonthDetailScreenState extends State<MonthDetailScreen> {
             _errorMessage = data['message'] ?? 'Failed to load data';
             _isLoading = false;
           });
+          print(
+              'Error message from API: ${data['message']}'); // Print error message from API
         }
       } else {
         setState(() {
-          _errorMessage = 'Failed to load data';
+          _errorMessage =
+              'Failed to load data: HTTP status ${response.statusCode}';
           _isLoading = false;
         });
+        print(
+            'Failed to load data: HTTP status ${response.statusCode}'); // Print HTTP status code
       }
     } catch (e) {
       setState(() {
         _errorMessage = 'Error: $e';
         _isLoading = false;
       });
+      print('Error occurred: $e'); // Print error details
     }
+  }
+
+  // Check if the date is a holiday (weekend or government holiday)
+  bool _isHoliday(DateTime date) {
+    String formattedDate =
+        "${date.year}-${date.month < 10 ? '0' : ''}${date.month}-${date.day < 10 ? '0' : ''}${date.day}";
+
+    return date.weekday == DateTime.saturday ||
+        date.weekday == DateTime.sunday ||
+        _governmentHolidays.containsKey(formattedDate);
+  }
+
+  // Get the specific holiday description
+  String _getHolidayDescription(DateTime date) {
+    String formattedDate =
+        "${date.year}-${date.month < 10 ? '0' : ''}${date.month}-${date.day < 10 ? '0' : ''}${date.day}";
+
+    if (date.weekday == DateTime.saturday) {
+      return "Weekend holiday, it's Saturday";
+    } else if (date.weekday == DateTime.sunday) {
+      return "Weekend holiday, it's Sunday";
+    } else if (_governmentHolidays.containsKey(formattedDate)) {
+      return _governmentHolidays[formattedDate]!;
+    }
+    return '';
+  }
+
+  // Show a toast message when a date is tapped
+  void _showToast(String message) {
+    Fluttertoast.showToast(
+      msg: message,
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+      backgroundColor: Colors.grey[800],
+      textColor: Colors.white,
+      fontSize: 14.0,
+    );
   }
 
   @override
@@ -106,53 +195,88 @@ class _MonthDetailScreenState extends State<MonthDetailScreen> {
   }
 
   Widget _buildAttendanceList() {
-    List<String> presentDays = [];
-    List<String> absentDays = [];
-
     DateTime firstDayOfMonth =
         DateTime(widget.selectedYear, widget.monthIndex + 1, 1);
     DateTime lastDayOfMonth =
         DateTime(widget.selectedYear, widget.monthIndex + 2, 0);
 
+    List<Widget> dayTiles = [];
+
     for (int i = 1; i <= lastDayOfMonth.day; i++) {
       String currentDate =
           "${widget.selectedYear}-${widget.monthIndex + 1 < 10 ? '0' : ''}${widget.monthIndex + 1}-${i < 10 ? '0' : ''}$i";
-      var present = _attendanceData
-          .where((entry) => entry['date'] == currentDate)
-          .isNotEmpty;
 
-      if (present) {
-        presentDays.add(currentDate);
+      DateTime date = DateTime(widget.selectedYear, widget.monthIndex + 1, i);
+      // Filter present data including in-time and out-time
+      var presentEntry = _attendanceData.firstWhere(
+          (entry) => entry['date'] == currentDate,
+          orElse: () => {});
+
+      bool present = presentEntry.isNotEmpty;
+
+      Color tileColor;
+      String statusText;
+      String inTime = '';
+      String outTime = '';
+
+      if (_isHoliday(date)) {
+        tileColor = Colors.orange; // Holiday
+        statusText = _getHolidayDescription(date);
+      } else if (present) {
+        tileColor = Colors.green; // Present
+        statusText = 'Present';
+        inTime = presentEntry['intime'] ?? 'N/A';
+        outTime = presentEntry['outtime'] ?? 'N/A';
       } else {
-        absentDays.add(currentDate);
+        tileColor = Colors.red; // Absent
+        statusText = 'Absent';
       }
+
+      dayTiles.add(
+        GestureDetector(
+          onTap: () {
+            if (_isHoliday(date)) {
+              _showToast(statusText); // Show holiday toast
+            } else {
+              String message = present
+                  ? 'In-Time: $inTime\nOut-Time: $outTime'
+                  : 'Attendance status: $statusText';
+              _showToast(message); // Show in/out time or absent
+            }
+          },
+          child: Card(
+            margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+            child: ListTile(
+              title: Text(
+                currentDate,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: tileColor,
+                ),
+              ),
+              subtitle: present
+                  ? Text('In-Time: $inTime | Out-Time: $outTime',
+                      style: TextStyle(color: tileColor))
+                  : null,
+              trailing: Text(
+                statusText,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: tileColor,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
     }
 
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Padding(
-            padding: EdgeInsets.all(8.0),
-            child: Text(
-              'Present Days',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-          ),
-          ...presentDays.map((day) => ListTile(
-                title: Text(day),
-              )),
-          const Padding(
-            padding: EdgeInsets.all(8.0),
-            child: Text(
-              'Absent Days',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-          ),
-          ...absentDays.map((day) => ListTile(
-                title: Text(day),
-              )),
-        ],
+        children: dayTiles,
       ),
     );
   }

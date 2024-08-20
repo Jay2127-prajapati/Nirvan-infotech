@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:nirvan_infotech/Admin/each_employee_attendance.dart';
 import 'package:url_launcher/url_launcher.dart'; // For handling URL launches
 import 'package:intl/intl.dart'; // For formatting dates
 import 'package:nirvan_infotech/colors/colors.dart';
@@ -72,89 +73,108 @@ class _AllEmployeeListState extends State<AllEmployeeList> {
     required String email,
     required String imageUrl,
   }) {
-    return Card(
-      elevation: 5,
-      margin: const EdgeInsets.symmetric(vertical: 8.0),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                // Use Image.network with errorBuilder to handle image loading errors
-                CircleAvatar(
-                  radius: 40,
-                  backgroundImage: NetworkImage(imageUrl),
-                  child: Image.network(
-                    imageUrl,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      // Return the default asset image if an error occurs
-                      return Image.asset(
-                        'assets/img/boy.png',
-                        fit: BoxFit.cover,
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        name,
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text('Employee ID: $empId'),
-                      Text('Contact: $contact'),
-                      Text('Date of Join: $dateOfJoin'),
-                      Text('Experience: $experience'),
-                      Text('Email: $email'),
-                    ],
-                  ),
-                ),
-              ],
+    return GestureDetector(
+      onTap: () {
+        print(
+            'Navigating to EachEmployeeAttendance with empId: $empId'); // Debug print statement
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => EachEmployeeAttendance(
+              empId: empId,
             ),
-            const SizedBox(height: 16),
-            Align(
-              alignment: Alignment.bottomRight,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
+          ),
+        );
+      },
+      child: Card(
+        elevation: 5,
+        margin: const EdgeInsets.symmetric(vertical: 8.0),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
                 children: [
-                  _buildActionButton(
-                    icon: Icons.call,
-                    onTap: () => _launchURL('tel:$contact'),
+                  CircleAvatar(
+                    radius: 40,
+                    backgroundImage: AssetImage("assets/img/boy.png"),
                   ),
-                  const SizedBox(width: 8),
-                  _buildActionButton(
-                    icon: FontAwesomeIcons.whatsapp,
-                    onTap: () => _launchURL(
-                        'https://wa.me/${contact.replaceAll(RegExp(r'\D'), '')}'),
-                  ),
-                  const SizedBox(width: 8),
-                  _buildActionButton(
-                    icon: Icons.delete,
-                    onTap: () => _showDeleteConfirmationDialog(context, empId),
-                  ),
-                  const SizedBox(width: 8),
-                  _buildActionButton(
-                    icon: Icons.edit,
-                    onTap: () =>
-                        _showUpdateConfirmationDialog(context, empId, email),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          name,
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text('Employee ID: $empId'),
+                        Text('Contact: $contact'),
+                        Text('Date of Join: $dateOfJoin'),
+                        Text('Experience: $experience'),
+                        Text('Email: $email'),
+                      ],
+                    ),
                   ),
                 ],
               ),
-            ),
-          ],
+              const SizedBox(height: 16),
+              Align(
+                alignment: Alignment.bottomRight,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _buildActionButton(
+                      icon: Icons.call,
+                      onTap: () => _launchURL('tel:$contact'),
+                    ),
+                    const SizedBox(width: 8),
+                    _buildActionButton(
+                      icon: FontAwesomeIcons.whatsapp,
+                      onTap: () => _launchURL(
+                          'https://wa.me/${contact.replaceAll(RegExp(r'\D'), '')}'),
+                    ),
+                    const SizedBox(width: 8),
+                    _buildActionButton(
+                      icon: Icons.delete,
+                      onTap: () =>
+                          _showDeleteConfirmationDialog(context, empId),
+                    ),
+                    const SizedBox(width: 8),
+                    _buildActionButton(
+                      icon: Icons.edit,
+                      onTap: () =>
+                          _showUpdateConfirmationDialog(context, empId, email),
+                    ),
+                    const SizedBox(width: 8),
+                    _buildActionButton(
+                      icon: Icons.calendar_today,
+                      onTap: () {
+                        print(
+                            'Navigating to EachEmployeeAttendance with empId: $empId'); // Debug print statement
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => EachEmployeeAttendance(
+                              empId: empId,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -216,9 +236,7 @@ class _AllEmployeeListState extends State<AllEmployeeList> {
                   'assets/img/nirvan-logo.png',
                   width: 72,
                 ),
-                const SizedBox(
-                  height: 24,
-                ),
+                const SizedBox(height: 24),
                 const Text(
                   'Nirvan Infotech',
                   style: TextStyle(
@@ -228,9 +246,7 @@ class _AllEmployeeListState extends State<AllEmployeeList> {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(
-                  height: 24,
-                ),
+                const SizedBox(height: 24),
                 const Text(
                   'Are you sure you want to remove this employee?',
                   textAlign: TextAlign.center,
@@ -241,9 +257,7 @@ class _AllEmployeeListState extends State<AllEmployeeList> {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(
-                  height: 24,
-                ),
+                const SizedBox(height: 24),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -296,7 +310,8 @@ class _AllEmployeeListState extends State<AllEmployeeList> {
   Future<void> _deleteEmployee(String empId) async {
     try {
       final response = await http.post(
-        Uri.parse('http://$baseIpAddress/nirvan-api/admin/delete_employee.php'),
+        Uri.parse(
+            'http://$baseIpAddress/nirvan-api/admin/employe_detail_atten.php'),
         body: {'empid': empId},
       );
 
@@ -343,9 +358,7 @@ class _AllEmployeeListState extends State<AllEmployeeList> {
                   'assets/img/nirvan-logo.png',
                   width: 72,
                 ),
-                const SizedBox(
-                  height: 24,
-                ),
+                const SizedBox(height: 24),
                 const Text(
                   'Nirvan Infotech',
                   style: TextStyle(
@@ -355,9 +368,7 @@ class _AllEmployeeListState extends State<AllEmployeeList> {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(
-                  height: 24,
-                ),
+                const SizedBox(height: 24),
                 const Text(
                   'Do you want to update this employee\'s information?',
                   textAlign: TextAlign.center,
@@ -368,9 +379,7 @@ class _AllEmployeeListState extends State<AllEmployeeList> {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(
-                  height: 24,
-                ),
+                const SizedBox(height: 24),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [

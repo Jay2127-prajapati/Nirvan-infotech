@@ -28,15 +28,20 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _getEmpId() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
-      _empId =
-          prefs.getString('empId'); // Retrieve empId from SharedPreferences
+      _empId = prefs.getString('employeeId'); // Use the correct key
+      print('Retrieved empId: $_empId'); // Debug print
     });
-    _fetchTasks(); // Fetch tasks after empId is retrieved
+    if (_empId != null && _empId!.isNotEmpty) {
+      _fetchTasks(); // Fetch tasks after empId is retrieved
+    } else {
+      print('Employee ID is not available.');
+    }
   }
 
   Future<void> _fetchTasks() async {
-    if (_empId == null) {
-      return; // empId is not available, do not proceed
+    if (_empId == null || _empId!.isEmpty) {
+      print('Employee ID is not available.');
+      return;
     }
 
     try {
@@ -48,10 +53,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        setState(() {
-          _tasks = List<Map<String, dynamic>>.from(data['tasks']);
-          _filterTasks(); // Filter tasks based on their status
-        });
+        if (data['status'] == 'success') {
+          setState(() {
+            _tasks = List<Map<String, dynamic>>.from(data['tasks']);
+            _filterTasks(); // Filter tasks based on their status
+          });
+        } else {
+          print('Error fetching tasks: ${data['message']}');
+        }
       } else {
         print('Failed to load tasks, status code: ${response.statusCode}');
       }
@@ -77,8 +86,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Container(
       width: itemWidth,
-      margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-      padding: const EdgeInsets.all(12.0),
+      margin: EdgeInsets.symmetric(
+        horizontal: itemWidth * 0.02, // Responsive margin
+        vertical: 8.0, // Fixed vertical margin for better spacing
+      ),
+      padding: EdgeInsets.all(12.0), // Consistent padding
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(8.0),
@@ -98,36 +110,30 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           CircleAvatar(
             backgroundColor: secondaryColorSmokewhite,
-            child: const Icon(Icons.task, color: primaryColorOcenblue),
+            child: Icon(Icons.task, color: primaryColorOcenblue, size: 24),
           ),
-          const SizedBox(width: 12.0),
+          SizedBox(width: 16.0),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   task['task_name'] ?? 'No Name',
-                  style: const TextStyle(
-                    fontSize: 16.0,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold),
                 ),
-                const SizedBox(height: 4.0),
+                SizedBox(height: 8.0),
                 Text(
                   'Deadline: ${task['deadline'] ?? 'No Deadline'}',
-                  style: const TextStyle(
-                    fontSize: 14.0,
-                    color: secondaryColorSmokeGrey,
-                  ),
+                  style:
+                      TextStyle(fontSize: 14.0, color: secondaryColorSmokeGrey),
                 ),
-                const SizedBox(height: 4.0),
+                SizedBox(height: 8.0),
                 Text(
                   'Status: ${task['status'] ?? 'No Status'}',
                   style: TextStyle(
-                    fontSize: 14.0,
-                    fontWeight: FontWeight.bold,
-                    color: statusColor,
-                  ),
+                      fontSize: 14.0,
+                      fontWeight: FontWeight.bold,
+                      color: statusColor),
                 ),
               ],
             ),
@@ -137,16 +143,52 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildLogoCard() {
+    return Center(
+      child: Container(
+        width:
+            MediaQuery.of(context).size.width * 0.85, // Adjust width as needed
+        child: Card(
+          elevation: 4.0,
+          margin: EdgeInsets.symmetric(vertical: 16.0),
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Image.asset(
+                  'assets/img/nirvan-logo.png', // Replace with the path to your logo image
+                  height: 100,
+                  width: 100,
+                ),
+                SizedBox(height: 16.0),
+                Text(
+                  'Welcome To Nirvan Institute',
+                  style: TextStyle(
+                    fontSize: 20.0,
+                    fontWeight: FontWeight.bold,
+                    color: primaryColorOcenblue,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Nirvan Infotech',
           style: TextStyle(
             color: secondaryColorSmokewhite,
             fontFamily: 'poppins',
             fontWeight: FontWeight.w600,
+            fontSize: 20.0,
           ),
         ),
         centerTitle: true,
@@ -161,56 +203,59 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               );
             },
-            icon: const Icon(Icons.notifications),
+            icon: Icon(Icons.notifications, size: 24),
             color: secondaryColorSmokewhite,
           ),
         ],
       ),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          double itemWidth = constraints.maxWidth * 0.9;
-          if (constraints.maxWidth > 600) {
-            itemWidth = constraints.maxWidth * 0.45;
-          }
-          return SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 16.0),
-                  const Text(
-                    'New Tasks',
-                    style: TextStyle(
-                      fontSize: 20.0,
-                      fontWeight: FontWeight.bold,
-                      color: primaryColorOcenblue,
-                    ),
+      body: OrientationBuilder(
+        builder: (context, orientation) {
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              double itemWidth = constraints.maxWidth * 0.9;
+              if (constraints.maxWidth > 600) {
+                itemWidth = constraints.maxWidth * 0.45;
+              }
+              return SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildLogoCard(),
+                      SizedBox(height: 16.0),
+                      Text(
+                        'New Tasks',
+                        style: TextStyle(
+                            fontSize: 20.0,
+                            fontWeight: FontWeight.bold,
+                            color: primaryColorOcenblue),
+                      ),
+                      SizedBox(height: 8.0),
+                      Wrap(
+                        children: newTasks
+                            .map((task) => _buildTaskItem(task, itemWidth))
+                            .toList(),
+                      ),
+                      SizedBox(height: 16.0),
+                      Text(
+                        'Pending Tasks',
+                        style: TextStyle(
+                            fontSize: 20.0,
+                            fontWeight: FontWeight.bold,
+                            color: primaryColorOcenblue),
+                      ),
+                      SizedBox(height: 8.0),
+                      Wrap(
+                        children: pendingTasks
+                            .map((task) => _buildTaskItem(task, itemWidth))
+                            .toList(),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 8.0),
-                  Wrap(
-                    children: newTasks
-                        .map((task) => _buildTaskItem(task, itemWidth))
-                        .toList(),
-                  ),
-                  const SizedBox(height: 16.0),
-                  const Text(
-                    'Pending Tasks',
-                    style: TextStyle(
-                      fontSize: 20.0,
-                      fontWeight: FontWeight.bold,
-                      color: primaryColorOcenblue,
-                    ),
-                  ),
-                  const SizedBox(height: 8.0),
-                  Wrap(
-                    children: pendingTasks
-                        .map((task) => _buildTaskItem(task, itemWidth))
-                        .toList(),
-                  ),
-                ],
-              ),
-            ),
+                ),
+              );
+            },
           );
         },
       ),

@@ -53,20 +53,32 @@ class _WatchAttendanceState extends State<WatchAttendance> {
           setState(() {
             _errorMessage = data['message'] ?? 'Failed to load data';
             _isLoading = false;
+            _showErrorSnackBar(_errorMessage);
           });
         }
       } else {
         setState(() {
-          _errorMessage = 'Failed to load data';
+          _errorMessage = 'Server Error Found. Check your server.';
           _isLoading = false;
+          _showErrorSnackBar(_errorMessage);
         });
       }
     } catch (e) {
       setState(() {
-        _errorMessage = 'Error: $e';
+        _errorMessage = 'Network error. Try again later.';
         _isLoading = false;
+        _showErrorSnackBar(_errorMessage);
       });
     }
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: const Duration(seconds: 3), // Duration of the toast message
+      ),
+    );
   }
 
   void _filterUsers(String filter) {

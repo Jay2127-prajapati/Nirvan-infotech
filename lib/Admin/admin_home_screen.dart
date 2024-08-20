@@ -1,5 +1,3 @@
-// admin_home_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:nirvan_infotech/Admin/all_employee_list.dart';
 import 'package:nirvan_infotech/Admin/task.dart';
@@ -78,7 +76,13 @@ class AdminHomeScreen extends StatelessWidget {
                 icon: Icons.settings,
                 label: 'Action 3',
                 onTap: () {
-                  // Implement action 3
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Screen is Not ready yet'),
+                      duration:
+                          Duration(seconds: 2), // Duration of the toast message
+                    ),
+                  );
                 },
               ),
             ],

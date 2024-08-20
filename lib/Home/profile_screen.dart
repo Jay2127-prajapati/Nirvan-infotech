@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
 import 'package:nirvan_infotech/Authentications/login_screen.dart';
 import 'package:nirvan_infotech/Home/notification_screen.dart';
@@ -32,47 +33,64 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // Function to fetch profile data from the API
   Future<void> fetchProfileData() async {
     final prefs = await SharedPreferences.getInstance();
-    final empId = prefs.getString('empId');
+    final empId = prefs.getString('employeeId');
+
+    print('Retrieved Employee ID: $empId');
 
     if (empId != null) {
-      final response = await http.get(
-        Uri.parse(
-            'http://$baseIpAddress/nirvan-api/employee/fetch_emp.php?empId=$empId'),
-      );
+      final url = Uri.parse(
+          'http://$baseIpAddress/nirvan-api/employee/fetch_emp.php?empId=$empId');
+      final response = await http.get(url);
+
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-
-        print('Decoded Response Data: $data');
-
         if (data['success']) {
           setState(() {
-            profileData = data;
-            if (data['image'] != null) {
+            profileData = data; // Update to use the top-level fields
+
+            // Decode and set image bytes if available
+            if (data['image'] != null && data['image'] != '') {
               try {
-                print('Base64 Image String: ${data['image']}');
-
-                // Normalize and decode the Base64 string
                 String normalizedBase64 = base64Normalize(data['image']);
-                print('Normalized Base64 String: $normalizedBase64');
                 imageBytes = base64Decode(normalizedBase64);
-                print('Image bytes: $imageBytes');
-
-                // Optional: Load the image into an Image widget
-                // imageWidget = Image.memory(imageBytes);
               } catch (e) {
                 print('Error decoding image: $e');
+                Fluttertoast.showToast(
+                  msg: "Error decoding image.",
+                  toastLength: Toast.LENGTH_LONG,
+                  gravity: ToastGravity.CENTER,
+                  backgroundColor: Colors.red,
+                  textColor: Colors.white,
+                );
               }
             }
           });
         } else {
-          print('Error: ${data['message']}');
+          print('API response was not successful: ${data['message']}');
+          Fluttertoast.showToast(
+            msg: "Failed to fetch profile data: ${data['message']}",
+            toastLength: Toast.LENGTH_LONG,
+            gravity: ToastGravity.CENTER,
+            backgroundColor: Colors.red,
+            textColor: Colors.white,
+          );
         }
       } else {
-        print('Error: ${response.reasonPhrase}');
+        print(
+            'Failed to fetch profile data. Status code: ${response.statusCode}');
+        Fluttertoast.showToast(
+          msg: "Failed to fetch profile data.",
+          toastLength: Toast.LENGTH_LONG,
+          gravity: ToastGravity.CENTER,
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+        );
       }
     } else {
-      print('empId is null');
+      print('Employee ID is null.');
     }
   }
 
@@ -236,18 +254,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(
                 height: 8.5,
               ),
-              const CircleAvatar(
+              CircleAvatar(
                 radius: 75,
                 backgroundColor: secondaryColorSmokeGrey,
-                backgroundImage: AssetImage('assets/img/boy.png'),
-                child:
-                    null, // No need to display a child icon since the image is always available
+                backgroundImage:
+                    AssetImage('assets/img/boy.png'), // Use static image
               ),
               const SizedBox(
                 height: 20.0,
               ),
               Text(
-                profileData.isNotEmpty ? profileData['name'] : '',
+                profileData.isNotEmpty ? profileData['name'] : 'Error',
                 style: const TextStyle(
                   color: secondaryColorSmokeGrey,
                   fontSize: 20.0,
@@ -288,7 +305,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       const SizedBox(
                         height: 30.0,
                       ),
-                      // GestureDetector wrapped only around CircleAvatar
                       GestureDetector(
                         onTap: () {
                           Navigator.push(
@@ -360,7 +376,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       const SizedBox(
                         height: 30.0,
                       ),
-                      // GestureDetector wrapped only around CircleAvatar
                       GestureDetector(
                         onTap: () {
                           Navigator.push(
@@ -407,130 +422,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   )
                 ],
               ),
-
-              // Container(
-              //   width: MediaQuery.of(context).size.width * 0.86,
-              //   margin: const EdgeInsets.symmetric(vertical: 10.0),
-              //   child: ElevatedButton(
-              //     onPressed: () {
-              //       // Navigate to the next screen
-              //       Navigator.push(
-              //         context,
-              //         MaterialPageRoute(
-              //             builder: (context) => const SettingsScreen()),
-              //       );
-              //     },
-              //     style: ElevatedButton.styleFrom(
-              //       backgroundColor:
-              //           secondaryColorSmokewhite, // Your desired background color
-              //       shape: RoundedRectangleBorder(
-              //         borderRadius: BorderRadius.circular(10.0),
-              //         side: const BorderSide(
-              //           color:
-              //               secondaryColorSmokeGrey, // Your desired border color
-              //           width: 2.0,
-              //         ),
-              //       ),
-              //     ),
-              //     child: Padding(
-              //       padding: const EdgeInsets.symmetric(
-              //           vertical: 13.0, horizontal: 1.0),
-              //       child: Row(
-              //         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              //         children: [
-              //           Align(
-              //             alignment: Alignment.centerLeft,
-              //             child: Image.asset(
-              //               'assets/img/settings.png',
-              //               width: 28,
-              //               height: 28,
-              //             ),
-              //           ),
-              //           const Text(
-              //             'Settings',
-              //             style: TextStyle(
-              //               fontSize: 18.0,
-              //               fontWeight: FontWeight.bold,
-              //               color:
-              //                   secondaryColorSmokeGrey, // Your desired text color
-              //               fontFamily: 'roboto',
-              //             ),
-              //           ),
-              //           Align(
-              //             alignment: Alignment.centerLeft,
-              //             child: Image.asset(
-              //               'assets/img/arrow.png',
-              //               width: 28,
-              //               height: 28,
-              //             ),
-              //           ),
-              //         ],
-              //       ),
-              //     ),
-              //   ),
-              // ),
-
-              Container(
-                width: MediaQuery.of(context).size.width * 0.86,
-                margin: const EdgeInsets.symmetric(vertical: 20.0),
-                child: ElevatedButton(
-                  onPressed: () {
-                    // Handle onPressed event
-                  },
-                  style: ButtonStyle(
-                    backgroundColor: MaterialStateProperty.all<Color>(
-                      secondaryColorSmokewhite,
-                    ),
-                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                      RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10.0),
-                        side: const BorderSide(
-                          color: secondaryColorSmokeGrey,
-                          width: 2.0,
-                        ),
-                      ),
-                    ),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 3.5, horizontal: 1.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: Image.asset(
-                            'assets/img/theme.png',
-                            width: 28,
-                            height: 28,
-                          ),
-                        ),
-                        const Text(
-                          'Theme',
-                          style: TextStyle(
-                            fontSize: 18.0,
-                            fontWeight: FontWeight.bold,
-                            color: secondaryColorSmokeGrey,
-                            fontFamily: 'roboto',
-                          ),
-                        ),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: Switch(
-                            value: isDarkMode,
-                            onChanged: (value) {
-                              setState(() {
-                                isDarkMode = value;
-                                // Implement dark mode toggle functionality here
-                              });
-                            },
-                            activeColor: primaryColorSkyblue,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+              SizedBox(
+                height: 50.0,
               ),
               Container(
                 width: MediaQuery.of(context).size.width * 0.86,

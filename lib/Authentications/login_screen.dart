@@ -5,7 +5,6 @@ import 'package:nirvan_infotech/Components/loder.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:nirvan_infotech/Components/bottom_nav.dart';
 import 'package:nirvan_infotech/colors/colors.dart';
-
 import '../const fiels/const.dart';
 
 const String adminRole = 'admin';
@@ -37,11 +36,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _checkLoginStatus() async {
     final prefs = await SharedPreferences.getInstance();
-    bool isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
-    String role = prefs.getString('role') ?? '';
+    List<String>? roles = prefs.getStringList('roles');
+    String? currentRole = prefs.getString('currentRole');
 
-    if (isLoggedIn) {
-      _navigateToRoleScreen(role);
+    if (roles != null && currentRole != null && roles.contains(currentRole)) {
+      _navigateToRoleScreen(currentRole);
     }
   }
 
@@ -101,27 +100,53 @@ class _LoginScreenState extends State<LoginScreen> {
         final responseData = json.decode(response.body);
         print('Response data: $responseData'); // Debug print
 
-        if (responseData['success']) {
+        if (responseData['success'] == true) {
           String role = responseData['role'] ?? '';
 
-          // Ensure empId is handled as a string
-          String empId;
-          if (responseData['id'] is int) {
-            empId = responseData['id'].toString();
-          } else {
-            empId = responseData['id'] ?? '';
+          // Determine the ID based on the role
+          String? userId;
+          switch (role) {
+            case adminRole:
+              userId = responseData['adminId'].toString(); // Convert to string
+              break;
+            case studentRole:
+              userId = responseData['stuId'].toString(); // Convert to string
+              break;
+            case employeeRole:
+              userId = responseData['empId'].toString(); // Convert to string
+              break;
+            default:
+              _showToastMessage('Unknown role');
+              return;
+          }
+
+          if (userId == null || userId.isEmpty) {
+            _showToastMessage('User ID is missing');
+            return;
           }
 
           final prefs = await SharedPreferences.getInstance();
-          await prefs.setBool('isLoggedIn', true);
-          await prefs.setString('role', role);
-          await prefs.setString('empId', empId); // Store empId
 
-          print('User logged in successfully. empId: $empId');
+          // Get the list of roles and add the new role if not present
+          List<String>? roles = prefs.getStringList('roles') ?? [];
+          if (!roles.contains(role)) {
+            roles.add(role);
+            await prefs.setStringList('roles', roles);
+          }
+
+          // Store the userId based on role
+          await prefs.setString('${role}Id', userId);
+          print(
+              'Stored ${role}Id: ${prefs.getString('${role}Id')}'); // Debug print
+
+          // Set current role
+          await prefs.setString('currentRole', role);
+
+          print('User logged in successfully. userId: $userId');
 
           _navigateToRoleScreen(role);
         } else {
-          _showToastMessage(responseData['message']);
+          _showToastMessage(responseData['message'] ?? 'Login failed');
         }
       } else {
         _showToastMessage("Server error. Please try again later.");

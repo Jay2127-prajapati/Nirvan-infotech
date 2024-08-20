@@ -8,7 +8,6 @@ import 'package:nirvan_infotech/colors/colors.dart';
 import 'package:nirvan_infotech/work/course_screen.dart';
 import 'package:nirvan_infotech/work/work_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import '../const fiels/const.dart';
 
 class AdminProfile extends StatefulWidget {
@@ -32,47 +31,51 @@ class _AdminProfileState extends State<AdminProfile> {
   // Function to fetch profile data from the API
   Future<void> fetchProfileData() async {
     final prefs = await SharedPreferences.getInstance();
-    final empId = prefs.getString('empId');
+    final adminId = prefs.getString('adminId'); // Retrieve 'adminId' here
 
-    if (empId != null) {
+    if (adminId != null) {
       final response = await http.get(
         Uri.parse(
-            'http://$baseIpAddress/nirvan-api/employee/fetch_emp.php?empId=$empId'),
+            'http://$baseIpAddress/nirvan-api/admin/fetch_admin_table.php?adminId=$adminId'), // Updated parameter name
       );
 
+      // Log the raw response body
+      print('Raw Response: ${response.body}');
+
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
+        try {
+          final data = json.decode(response.body);
 
-        print('Decoded Response Data: $data');
+          print('Decoded Response Data: $data');
 
-        if (data['success']) {
-          setState(() {
-            profileData = data;
-            if (data['image'] != null) {
-              try {
-                print('Base64 Image String: ${data['image']}');
+          if (data['success']) {
+            setState(() {
+              profileData = data;
+              if (data['image'] != null && data['image'].isNotEmpty) {
+                try {
+                  print('Base64 Image String: ${data['image']}');
 
-                // Normalize and decode the Base64 string
-                String normalizedBase64 = base64Normalize(data['image']);
-                print('Normalized Base64 String: $normalizedBase64');
-                imageBytes = base64Decode(normalizedBase64);
-                print('Image bytes: $imageBytes');
-
-                // Optional: Load the image into an Image widget
-                // imageWidget = Image.memory(imageBytes);
-              } catch (e) {
-                print('Error decoding image: $e');
+                  // Normalize and decode the Base64 string
+                  String normalizedBase64 = base64Normalize(data['image']);
+                  print('Normalized Base64 String: $normalizedBase64');
+                  imageBytes = base64Decode(normalizedBase64);
+                  print('Image bytes: $imageBytes');
+                } catch (e) {
+                  print('Error decoding image: $e');
+                }
               }
-            }
-          });
-        } else {
-          print('Error: ${data['message']}');
+            });
+          } else {
+            print('Error: ${data['message']}');
+          }
+        } catch (e) {
+          print('JSON Decode Error: $e');
         }
       } else {
         print('Error: ${response.reasonPhrase}');
       }
     } else {
-      print('empId is null');
+      print('adminId is null');
     }
   }
 
@@ -182,10 +185,6 @@ class _AdminProfileState extends State<AdminProfile> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear(); // This will remove all key-value pairs
 
-    // Optionally, clear cached files or other local data
-    // Uncomment and adjust the following if needed:
-    // await _clearCachedFiles();
-
     // Navigate to login screen and clear the navigation stack
     Navigator.pushAndRemoveUntil(
       context,
@@ -194,11 +193,6 @@ class _AdminProfileState extends State<AdminProfile> {
           false, // This ensures the user cannot go back to the previous screen
     );
   }
-
-  // Optional: Function to clear cached files or other local data
-  // Future<void> _clearCachedFiles() async {
-  //   // Implement logic to clear cached files, if applicable
-  // }
 
   @override
   Widget build(BuildContext context) {
@@ -233,21 +227,17 @@ class _AdminProfileState extends State<AdminProfile> {
         child: Center(
           child: Column(
             children: [
-              const SizedBox(
-                height: 8.5,
-              ),
-              const CircleAvatar(
+              const SizedBox(height: 8.5),
+              CircleAvatar(
                 radius: 75,
                 backgroundColor: secondaryColorSmokeGrey,
-                backgroundImage: AssetImage('assets/img/boy.png'),
-                child:
-                    null, // No need to display a child icon since the image is always available
+                backgroundImage: imageBytes != null
+                    ? MemoryImage(imageBytes!)
+                    : AssetImage('assets/img/boy.png') as ImageProvider,
               ),
-              const SizedBox(
-                height: 20.0,
-              ),
+              const SizedBox(height: 20.0),
               Text(
-                profileData.isNotEmpty ? profileData['name'] : '',
+                profileData.isNotEmpty ? profileData['name'] ?? '' : '',
                 style: const TextStyle(
                   color: secondaryColorSmokeGrey,
                   fontSize: 20.0,
@@ -255,20 +245,18 @@ class _AdminProfileState extends State<AdminProfile> {
                   fontFamily: 'poppins',
                 ),
               ),
-              const SizedBox(
-                height: 30,
-              ),
+              const SizedBox(height: 30),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   GestureDetector(
                     onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const ModulesScreen(),
-                        ),
-                      );
+                      // Navigator.push(
+                      //   // context,
+                      //   // MaterialPageRoute(
+                      //   //   // builder: (context) => const ModulesScreen(),
+                      //   // ),
+                      // );
                     },
                     child: Column(
                       children: [
@@ -283,19 +271,15 @@ class _AdminProfileState extends State<AdminProfile> {
                         ),
                         Text(
                           profileData.isNotEmpty
-                              ? (profileData['domain'] != null
-                                  ? profileData['domain'].toString()
-                                  : 'No domain data') // Fallback text
-                              : 'No domain data', // Fallback text
+                              ? (profileData['domain'] ?? 'No domain data')
+                              : 'No domain data',
                           style: const TextStyle(
                             fontSize: 14.0,
                             color: secondaryColorSmokeGrey,
                             fontFamily: 'roboto',
                           ),
                         ),
-                        const SizedBox(
-                          height: 30.0,
-                        ),
+                        const SizedBox(height: 30.0),
                         CircleAvatar(
                           radius: 35,
                           backgroundColor: secondaryColorSmokeGrey,
@@ -317,9 +301,7 @@ class _AdminProfileState extends State<AdminProfile> {
                             ),
                           ),
                         ),
-                        const SizedBox(
-                          height: 13.5,
-                        ),
+                        const SizedBox(height: 13.5),
                         const Text(
                           'Modules',
                           style: TextStyle(
@@ -333,12 +315,12 @@ class _AdminProfileState extends State<AdminProfile> {
                   ),
                   GestureDetector(
                     onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const WorkScreen(),
-                        ),
-                      );
+                      // Navigator.push(
+                      //   context,
+                      //   MaterialPageRoute(
+                      //     builder: (context) => const WorkScreen(),
+                      //   ),
+                      // );
                     },
                     child: Column(
                       children: [
@@ -353,19 +335,16 @@ class _AdminProfileState extends State<AdminProfile> {
                         ),
                         Text(
                           profileData.isNotEmpty
-                              ? (profileData['experience'] != null
-                                  ? profileData['experience'].toString()
-                                  : 'No experience data') // Fallback text
-                              : 'No experience data', // Fallback text
+                              ? (profileData['experience'] ??
+                                  'No experience data')
+                              : 'No experience data',
                           style: const TextStyle(
                             fontSize: 14.0,
                             color: secondaryColorSmokeGrey,
                             fontFamily: 'roboto',
                           ),
                         ),
-                        const SizedBox(
-                          height: 30.0,
-                        ),
+                        const SizedBox(height: 30.0),
                         CircleAvatar(
                           radius: 35,
                           backgroundColor: secondaryColorSmokeGrey,
@@ -387,9 +366,7 @@ class _AdminProfileState extends State<AdminProfile> {
                             ),
                           ),
                         ),
-                        const SizedBox(
-                          height: 20.0,
-                        ),
+                        const SizedBox(height: 20.0),
                         const Text(
                           'Your Work',
                           style: TextStyle(
@@ -403,130 +380,8 @@ class _AdminProfileState extends State<AdminProfile> {
                   ),
                 ],
               ),
-
-              // Container(
-              //   width: MediaQuery.of(context).size.width * 0.86,
-              //   margin: const EdgeInsets.symmetric(vertical: 10.0),
-              //   child: ElevatedButton(
-              //     onPressed: () {
-              //       // Navigate to the next screen
-              //       Navigator.push(
-              //         context,
-              //         MaterialPageRoute(
-              //             builder: (context) => const SettingsScreen()),
-              //       );
-              //     },
-              //     style: ElevatedButton.styleFrom(
-              //       backgroundColor:
-              //           secondaryColorSmokewhite, // Your desired background color
-              //       shape: RoundedRectangleBorder(
-              //         borderRadius: BorderRadius.circular(10.0),
-              //         side: const BorderSide(
-              //           color:
-              //               secondaryColorSmokeGrey, // Your desired border color
-              //           width: 2.0,
-              //         ),
-              //       ),
-              //     ),
-              //     child: Padding(
-              //       padding: const EdgeInsets.symmetric(
-              //           vertical: 13.0, horizontal: 1.0),
-              //       child: Row(
-              //         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              //         children: [
-              //           Align(
-              //             alignment: Alignment.centerLeft,
-              //             child: Image.asset(
-              //               'assets/img/settings.png',
-              //               width: 28,
-              //               height: 28,
-              //             ),
-              //           ),
-              //           const Text(
-              //             'Settings',
-              //             style: TextStyle(
-              //               fontSize: 18.0,
-              //               fontWeight: FontWeight.bold,
-              //               color:
-              //                   secondaryColorSmokeGrey, // Your desired text color
-              //               fontFamily: 'roboto',
-              //             ),
-              //           ),
-              //           Align(
-              //             alignment: Alignment.centerLeft,
-              //             child: Image.asset(
-              //               'assets/img/arrow.png',
-              //               width: 28,
-              //               height: 28,
-              //             ),
-              //           ),
-              //         ],
-              //       ),
-              //     ),
-              //   ),
-              // ),
-
-              Container(
-                width: MediaQuery.of(context).size.width * 0.86,
-                margin: const EdgeInsets.symmetric(vertical: 20.0),
-                child: ElevatedButton(
-                  onPressed: () {
-                    // Handle onPressed event
-                  },
-                  style: ButtonStyle(
-                    backgroundColor: MaterialStateProperty.all<Color>(
-                      secondaryColorSmokewhite,
-                    ),
-                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                      RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10.0),
-                        side: const BorderSide(
-                          color: secondaryColorSmokeGrey,
-                          width: 2.0,
-                        ),
-                      ),
-                    ),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 3.5, horizontal: 1.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: Image.asset(
-                            'assets/img/theme.png',
-                            width: 28,
-                            height: 28,
-                          ),
-                        ),
-                        const Text(
-                          'Theme',
-                          style: TextStyle(
-                            fontSize: 18.0,
-                            fontWeight: FontWeight.bold,
-                            color: secondaryColorSmokeGrey,
-                            fontFamily: 'roboto',
-                          ),
-                        ),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: Switch(
-                            value: isDarkMode,
-                            onChanged: (value) {
-                              setState(() {
-                                isDarkMode = value;
-                                // Implement dark mode toggle functionality here
-                              });
-                            },
-                            activeColor: primaryColorSkyblue,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+              SizedBox(
+                height: 50,
               ),
               Container(
                 width: MediaQuery.of(context).size.width * 0.86,
